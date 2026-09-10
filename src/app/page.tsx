@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Zap,
@@ -8,28 +9,15 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Trash2,
-  Eye,
-  TrendingUp,
-  Clock,
   Loader2,
-  Search,
   Sparkles,
-  ArrowRight,
-  BarChart3,
-  Plus,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 
 type ShortUrlItem = {
   id: string
@@ -39,29 +27,6 @@ type ShortUrlItem = {
   visits: number
   createdAt: string
   shortUrl: string
-}
-
-type ApiResult = {
-  urls: ShortUrlItem[]
-  total: number
-  totalVisits: number
-}
-
-function timeAgo(iso: string): string {
-  const now = Date.now()
-  const then = new Date(iso).getTime()
-  const diff = Math.max(0, now - then)
-  const s = Math.floor(diff / 1000)
-  if (s < 60) return `${s}s ago`
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  if (d < 30) return `${d}d ago`
-  const mo = Math.floor(d / 30)
-  if (mo < 12) return `${mo}mo ago`
-  return `${Math.floor(mo / 12)}y ago`
 }
 
 function getOrigin(): string {
@@ -77,31 +42,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ShortUrlItem | null>(null)
   const [copied, setCopied] = useState(false)
-  const [list, setList] = useState<ShortUrlItem[]>([])
-  const [stats, setStats] = useState({ total: 0, totalVisits: 0 })
-  const [search, setSearch] = useState('')
   const [origin, setOrigin] = useState('')
 
   useEffect(() => {
     setOrigin(getOrigin())
   }, [])
-
-  const fetchList = useCallback(async () => {
-    try {
-      const res = await fetch('/api/urls')
-      if (!res.ok) throw new Error('Failed to load')
-      const data: ApiResult = await res.json()
-      setList(data.urls)
-      setStats({ total: data.total, totalVisits: data.totalVisits })
-    } catch (err) {
-      console.error(err)
-      toast.error('Failed to load your URLs')
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchList()
-  }, [fetchList])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -132,7 +77,6 @@ export default function Home() {
       setTitle('')
       setCustomAlias('')
       setUseCustom(false)
-      fetchList()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong'
       toast.error(msg)
@@ -152,30 +96,6 @@ export default function Home() {
     }
   }
 
-  const handleDelete = async (code: string) => {
-    const prev = list
-    setList((l) => l.filter((u) => u.shortCode !== code))
-    try {
-      const res = await fetch(`/api/url/${code}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed')
-      toast.success('URL deleted')
-      fetchList()
-    } catch {
-      toast.error('Failed to delete')
-      setList(prev)
-    }
-  }
-
-  const filteredList = list.filter((u) => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return (
-      u.shortCode.toLowerCase().includes(q) ||
-      u.originalUrl.toLowerCase().includes(q) ||
-      (u.title?.toLowerCase().includes(q) ?? false)
-    )
-  })
-
   const fullShortUrl = result ? `${origin}/r/${result.shortCode}` : ''
 
   return (
@@ -193,19 +113,13 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href="#dashboard"
-              className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-blue-700 sm:inline-block"
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
             >
-              Dashboard
-            </a>
-            <a
-              href="#shortener"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              New
-            </a>
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </Link>
           </div>
         </div>
       </header>
@@ -213,7 +127,7 @@ export default function Home() {
       {/* Hero / Shortener */}
       <section
         id="shortener"
-        className="relative overflow-hidden border-b border-blue-100"
+        className="relative flex-1 overflow-hidden"
       >
         {/* Decorative gradient blobs */}
         <div className="pointer-events-none absolute inset-0 -z-10">
@@ -242,7 +156,7 @@ export default function Home() {
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-gray-600 sm:text-base">
               Paste any long URL below, get a short link you can share anywhere.
-              Track visits and manage all your links from one dashboard.
+              Powered by PostgreSQL · visit tracking included.
             </p>
           </motion.div>
 
@@ -418,205 +332,24 @@ export default function Home() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </section>
 
-      {/* Dashboard */}
-      <section id="dashboard" className="flex-1 bg-gray-50/40">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                <BarChart3 className="h-6 w-6 text-blue-600" />
-                Dashboard
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                View and manage all your shortened URLs in one place.
-              </p>
-            </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search by URL, code, or title..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="border-blue-100 pl-9 focus-visible:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Stat cards */}
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-            <StatCard
-              icon={<Link2 className="h-4 w-4" />}
-              label="Total Links"
-              value={stats.total}
-              accent="blue"
+          {/* Features strip */}
+          <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <FeatureItem
+              icon={<Zap className="h-4 w-4" />}
+              title="Instant shortening"
+              desc="Get your short URL in milliseconds."
             />
-            <StatCard
-              icon={<Eye className="h-4 w-4" />}
-              label="Total Visits"
-              value={stats.totalVisits}
-              accent="blue"
+            <FeatureItem
+              icon={<ShieldCheck className="h-4 w-4" />}
+              title="5-second ad page"
+              desc="Every redirect shows a 5s ad interstitial."
             />
-            <StatCard
-              icon={<TrendingUp className="h-4 w-4" />}
-              label="Avg Visits/Link"
-              value={stats.total ? Math.round(stats.totalVisits / stats.total) : 0}
-              accent="blue"
+            <FeatureItem
+              icon={<Sparkles className="h-4 w-4" />}
+              title="Visit analytics"
+              desc="Admin dashboard tracks every click."
             />
-          </div>
-
-          {/* List */}
-          <div className="overflow-hidden rounded-xl border border-blue-100 bg-white shadow-sm">
-            {filteredList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                  <Link2 className="h-6 w-6 text-blue-400" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900">
-                  {search ? 'No matches found' : 'No short URLs yet'}
-                </h3>
-                <p className="mt-1 max-w-sm text-sm text-gray-500">
-                  {search
-                    ? 'Try a different search term.'
-                    : 'Create your first short URL using the form above.'}
-                </p>
-                {!search && (
-                  <a
-                    href="#shortener"
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                  >
-                    Create one <ArrowRight className="h-4 w-4" />
-                  </a>
-                )}
-              </div>
-            ) : (
-              <div className="max-h-[640px] overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 z-10 bg-blue-50 text-left text-xs uppercase tracking-wide text-blue-700">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">Short Link</th>
-                      <th className="hidden px-4 py-3 font-semibold md:table-cell">
-                        Destination
-                      </th>
-                      <th className="px-4 py-3 text-center font-semibold">
-                        Visits
-                      </th>
-                      <th className="hidden px-4 py-3 font-semibold sm:table-cell">
-                        Created
-                      </th>
-                      <th className="px-4 py-3 text-right font-semibold">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-blue-50">
-                    {filteredList.map((u) => {
-                      const fullUrl = `${origin}/r/${u.shortCode}`
-                      return (
-                        <tr
-                          key={u.id}
-                          className="group transition-colors hover:bg-blue-50/40"
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-700">
-                                <Link2 className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="min-w-0">
-                                <a
-                                  href={fullUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block truncate font-mono text-xs font-semibold text-blue-700 hover:underline sm:text-sm"
-                                >
-                                  /r/{u.shortCode}
-                                </a>
-                                {u.title && (
-                                  <div className="truncate text-xs text-gray-500">
-                                    {u.title}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="hidden max-w-xs px-4 py-3 md:table-cell">
-                            <a
-                              href={u.originalUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block truncate text-xs text-gray-600 hover:text-blue-700 hover:underline"
-                              title={u.originalUrl}
-                            >
-                              {u.originalUrl}
-                            </a>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                              <Eye className="h-3 w-3" />
-                              {u.visits}
-                            </span>
-                          </td>
-                          <td className="hidden px-4 py-3 sm:table-cell">
-                            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                              <Clock className="h-3 w-3" />
-                              {timeAgo(u.createdAt)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1">
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleCopy(fullUrl)}
-                                      className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                                      aria-label="Copy link"
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Copy</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <a
-                                      href={fullUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                                      aria-label="Open link"
-                                    >
-                                      <ExternalLink className="h-4 w-4" />
-                                    </a>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Open</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDelete(u.shortCode)}
-                                      className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                                      aria-label="Delete link"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -632,37 +365,35 @@ export default function Home() {
             <span className="text-gray-400">·</span>
             <span>Simple &amp; fast</span>
           </div>
-          <div className="text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} ShortURL. All rights reserved.
-          </div>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 transition-colors hover:underline"
+          >
+            <ShieldCheck className="h-3 w-3" />
+            Admin login
+          </Link>
         </div>
       </footer>
     </div>
   )
 }
 
-function StatCard({
+function FeatureItem({
   icon,
-  label,
-  value,
-  accent,
+  title,
+  desc,
 }: {
   icon: React.ReactNode
-  label: string
-  value: number
-  accent: 'blue'
+  title: string
+  desc: string
 }) {
   return (
     <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
-          {icon}
-        </div>
-        <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          {label}
-        </div>
+      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+        {icon}
       </div>
-      <div className="mt-2 text-2xl font-bold text-blue-900">{value}</div>
+      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
     </div>
   )
 }
