@@ -14,15 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ShortURL - Fast & Simple URL Shortener",
+  title: "ShortURL - Shorten your long URLs in one click",
   description:
-    "Shorten long URLs in seconds. Track visits, manage links, and share them anywhere. Free, fast, and secure URL shortener.",
+    "ShortURL makes long links manageable. Shorten, customize, and share URLs for free. Track every click with built-in analytics. No sign-up required.",
   keywords: [
     "URL shortener",
     "short URL",
     "link shortener",
     "tiny url",
     "short link",
+    "shorten URL",
   ],
   icons: { icon: "/logo.svg" },
 };

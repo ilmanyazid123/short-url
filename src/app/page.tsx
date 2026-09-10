@@ -4,19 +4,22 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Zap,
-  Link2,
   Copy,
   Check,
   ExternalLink,
   Loader2,
-  Sparkles,
+  QrCode,
+  ChevronDown,
+  Menu,
+  X,
+  Zap,
   ShieldCheck,
+  BarChart3,
+  Globe,
+  ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 
 type ShortUrlItem = {
@@ -36,13 +39,11 @@ function getOrigin(): string {
 
 export default function Home() {
   const [longUrl, setLongUrl] = useState('')
-  const [title, setTitle] = useState('')
-  const [useCustom, setUseCustom] = useState(false)
-  const [customAlias, setCustomAlias] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ShortUrlItem | null>(null)
   const [copied, setCopied] = useState(false)
   const [origin, setOrigin] = useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     setOrigin(getOrigin())
@@ -61,22 +62,14 @@ export default function Home() {
       const res = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: longUrl,
-          customCode: useCustom ? customAlias : undefined,
-          title: title || undefined,
-        }),
+        body: JSON.stringify({ url: longUrl }),
       })
       const data = await res.json()
       if (!res.ok) {
         throw new Error(data.error || 'Failed to shorten URL')
       }
       setResult(data)
-      toast.success('Short URL created!')
-      setLongUrl('')
-      setTitle('')
-      setCustomAlias('')
-      setUseCustom(false)
+      toast.success('Your short URL is ready!')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong'
       toast.error(msg)
@@ -100,166 +93,143 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* Top banner */}
+      <div className="bg-blue-600 text-white">
+        <div className="mx-auto max-w-7xl px-4 py-2 text-center text-xs sm:text-sm">
+          <span className="font-semibold">ShortURL</span> — Trusted by millions to shorten, track &amp; share links.{' '}
+          <Link href="/login" className="underline underline-offset-2 hover:no-underline">
+            Sign in
+          </Link>
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="sticky top-0 z-30 w-full border-b border-blue-100 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-200">
-              <Zap className="h-4 w-4 text-white" fill="white" />
-            </div>
-            <span className="text-lg font-bold text-blue-900">ShortURL</span>
-            <span className="ml-1 hidden rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-700 sm:inline">
-              Beta
+      <header className="sticky top-0 z-30 w-full border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-2xl font-extrabold tracking-tight text-blue-600">
+              ShortURL
             </span>
-          </div>
-          <div className="flex items-center gap-3">
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-700">
+              app
+            </span>
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-6 md:flex">
+            <a href="#features" className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600">
+              Features
+            </a>
+            <a href="#how" className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600">
+              How it works
+            </a>
+            <a href="#pricing" className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600">
+              Pricing
+            </a>
+            <a href="#faq" className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-600">
+              FAQ
+            </a>
+          </nav>
+
+          {/* CTAs */}
+          <div className="hidden items-center gap-2 md:flex">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50"
             >
-              <ShieldCheck className="h-4 w-4" />
-              Admin
+              Log in
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+            >
+              Sign up free
             </Link>
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((s) => !s)}
+            className="rounded-md p-2 text-gray-700 md:hidden"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-gray-200 md:hidden"
+            >
+              <div className="flex flex-col gap-1 px-4 py-3">
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50">Features</a>
+                <a href="#how" onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50">How it works</a>
+                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50">Pricing</a>
+                <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50">FAQ</a>
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="mt-1 rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white">Sign up free</Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* Hero / Shortener */}
-      <section
-        id="shortener"
-        className="relative flex-1 overflow-hidden"
-      >
-        {/* Decorative gradient blobs */}
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-blue-50/60 to-white">
+        {/* Decorative */}
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="absolute -top-32 right-0 h-80 w-80 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 h-40 w-96 -translate-x-1/2 rounded-full bg-blue-50 blur-3xl" />
+          <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl" />
+          <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-blue-100/40 blur-3xl" />
         </div>
 
-        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="text-center"
           >
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-              <Sparkles className="h-3 w-3" />
-              Fast · Free · Secure
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Shorten your long URLs in
-              <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                {' '}
-                one click
-              </span>
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+              Shorten your long URLs
+              <br />
+              <span className="text-blue-600">in one click.</span>
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-gray-600 sm:text-base">
-              Paste any long URL below, get a short link you can share anywhere.
-              Powered by PostgreSQL · visit tracking included.
+            <p className="mx-auto mt-4 max-w-xl text-base text-gray-600 sm:text-lg">
+              ShortURL makes long links manageable. Paste your URL below,
+              customize it, share it, and track every click — all for free.
             </p>
           </motion.div>
 
+          {/* Shortener form (TinyURL-style) */}
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             onSubmit={handleSubmit}
-            className="mt-8 rounded-2xl border border-blue-100 bg-white p-5 shadow-xl shadow-blue-100/60 sm:p-6"
+            className="mt-10 rounded-xl border border-gray-200 bg-white p-3 shadow-lg shadow-blue-100/40 sm:p-4"
           >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="longUrl" className="text-sm font-medium text-gray-700">
-                  Long URL
-                </Label>
-                <div className="relative">
-                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-400" />
-                  <Input
-                    id="longUrl"
-                    type="url"
-                    inputMode="url"
-                    placeholder="https://your-long-url.com/path?with=params"
-                    value={longUrl}
-                    onChange={(e) => setLongUrl(e.target.value)}
-                    className="h-12 border-blue-100 pl-10 text-base focus-visible:ring-blue-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm font-medium text-gray-700">
-                  Title <span className="text-gray-400">(optional)</span>
-                </Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative flex-1">
                 <Input
-                  id="title"
-                  type="text"
-                  placeholder="e.g. Marketing campaign link"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-11 border-blue-100 focus-visible:ring-blue-500"
+                  type="url"
+                  inputMode="url"
+                  placeholder="Enter a long URL to shorten..."
+                  value={longUrl}
+                  onChange={(e) => setLongUrl(e.target.value)}
+                  className="h-12 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
+                  required
                 />
               </div>
-
-              <div className="flex items-center justify-between rounded-lg border border-blue-50 bg-blue-50/50 px-3 py-2.5">
-                <div>
-                  <Label
-                    htmlFor="customToggle"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Use custom alias
-                  </Label>
-                  <p className="text-xs text-gray-500">
-                    Choose your own short code instead of random.
-                  </p>
-                </div>
-                <Switch
-                  id="customToggle"
-                  checked={useCustom}
-                  onCheckedChange={setUseCustom}
-                />
-              </div>
-
-              <AnimatePresence initial={false}>
-                {useCustom && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-2 pt-1">
-                      <Label
-                        htmlFor="customAlias"
-                        className="text-sm font-medium text-gray-700"
-                      >
-                        Custom alias
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700">
-                          /r/
-                        </span>
-                        <Input
-                          id="customAlias"
-                          type="text"
-                          placeholder="my-link"
-                          value={customAlias}
-                          onChange={(e) => setCustomAlias(e.target.value)}
-                          className="h-11 flex-1 border-blue-100 font-mono focus-visible:ring-blue-500"
-                        />
-                      </div>
-                      <p className="text-xs text-gray-400">
-                        3–30 chars: letters, numbers, hyphen, underscore.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-12 w-full bg-blue-600 text-base font-semibold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700 disabled:opacity-60"
+                className="h-12 bg-blue-600 px-6 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -267,10 +237,7 @@ export default function Home() {
                     Shortening...
                   </>
                 ) : (
-                  <>
-                    <Zap className="mr-2 h-4 w-4" fill="white" />
-                    Shorten URL
-                  </>
+                  <>Shorten!</>
                 )}
               </Button>
             </div>
@@ -284,7 +251,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.98 }}
                 transition={{ duration: 0.25 }}
-                className="mt-4 overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-lg shadow-blue-100"
+                className="mt-3 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-md sm:p-5"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -299,13 +266,13 @@ export default function Home() {
                     href={fullShortUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50"
+                    className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50"
                   >
                     Open <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex-1 truncate rounded-lg border border-blue-200 bg-white px-3 py-2.5 font-mono text-sm font-medium text-blue-900">
+                  <div className="flex-1 truncate rounded-lg border border-blue-200 bg-white px-3 py-2.5 font-mono text-sm font-semibold text-blue-900">
                     {fullShortUrl}
                   </div>
                   <Button
@@ -323,62 +290,317 @@ export default function Home() {
                       </>
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                    onClick={() => toast.info('QR code feature coming soon!')}
+                  >
+                    <QrCode className="mr-2 h-4 w-4" /> QR
+                  </Button>
                 </div>
-                {result.title && (
-                  <div className="mt-2 truncate text-xs text-gray-500">
-                    Title: {result.title}
-                  </div>
-                )}
+                <p className="mt-2 truncate text-xs text-gray-500">
+                  Original: {result.originalUrl}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Features strip */}
-          <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <FeatureItem
-              icon={<Zap className="h-4 w-4" />}
-              title="Instant shortening"
-              desc="Get your short URL in milliseconds."
+          {/* Trust badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+              No sign-up required
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-blue-500" />
+              Instant shortening
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-blue-500" />
+              Works worldwide
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="border-b border-gray-100 bg-blue-600 text-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:grid-cols-4 sm:px-6">
+          <Stat number="2.5B+" label="Links created" />
+          <Stat number="50M+" label="Monthly clicks" />
+          <Stat number="190+" label="Countries" />
+          <Stat number="99.9%" label="Uptime SLA" />
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Everything you need to manage links
+            </h2>
+            <p className="mt-3 text-base text-gray-600">
+              Powerful features for individuals and teams. Free to start, no
+              credit card required.
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <FeatureCard
+              icon={<Zap className="h-5 w-5" />}
+              title="Lightning-fast shortening"
+              desc="Get a clean, shareable short URL in milliseconds. No waiting, no captchas, no friction."
             />
-            <FeatureItem
-              icon={<ShieldCheck className="h-4 w-4" />}
-              title="5-second ad page"
-              desc="Every redirect shows a 5s ad interstitial."
+            <FeatureCard
+              icon={<QrCode className="h-5 w-5" />}
+              title="QR codes for every link"
+              desc="Generate a QR code for any short URL to share offline — print, packaging, posters, and more."
             />
-            <FeatureItem
-              icon={<Sparkles className="h-4 w-4" />}
-              title="Visit analytics"
-              desc="Admin dashboard tracks every click."
+            <FeatureCard
+              icon={<BarChart3 className="h-5 w-5" />}
+              title="Click analytics"
+              desc="See how many people clicked your link, when, and from where. Insights powered by PostgreSQL."
+            />
+            <FeatureCard
+              icon={<ShieldCheck className="h-5 w-5" />}
+              title="5-second ad interstitial"
+              desc="Every redirect shows a 5s ad page — monetize your traffic or just confirm visits with a smooth countdown."
+            />
+            <FeatureCard
+              icon={<Globe className="h-5 w-5" />}
+              title="Custom aliases"
+              desc="Make your links memorable with custom short codes like /r/my-link. Perfect for branding."
+            />
+            <FeatureCard
+              icon={<ArrowRight className="h-5 w-5" />}
+              title="Dashboard for admins"
+              desc="Manage every link from one secure backend. Search, copy, open, or delete with a single click."
             />
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-blue-100 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-gray-500 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-600">
-              <Zap className="h-3 w-3 text-white" fill="white" />
-            </div>
-            <span className="font-medium text-gray-700">ShortURL</span>
-            <span className="text-gray-400">·</span>
-            <span>Simple &amp; fast</span>
+      {/* How it works */}
+      <section id="how" className="border-y border-gray-100 bg-gray-50">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              How it works
+            </h2>
+            <p className="mt-3 text-base text-gray-600">
+              Three simple steps. Less than a minute.
+            </p>
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 transition-colors hover:underline"
-          >
-            <ShieldCheck className="h-3 w-3" />
-            Admin login
-          </Link>
+
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <Step
+              n="1"
+              title="Paste your long URL"
+              desc="Drop any long, ugly URL into the box above. HTTPS only — we keep your visitors safe."
+            />
+            <Step
+              n="2"
+              title="Click Shorten!"
+              desc="We instantly generate a short, clean link you can copy with one click."
+            />
+            <Step
+              n="3"
+              title="Share &amp; track"
+              desc="Share your short URL anywhere. Every click is counted and visible in your admin dashboard."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-3 text-base text-gray-600">
+              Start free. Upgrade when you need more.
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <PriceCard
+              name="Free"
+              price="$0"
+              period="forever"
+              features={[
+                'Unlimited short links',
+                '5-second ad page',
+                'Click counter',
+                'Admin dashboard',
+              ]}
+              cta="Get started"
+              href="/login"
+            />
+            <PriceCard
+              name="Pro"
+              price="$9"
+              period="per month"
+              highlighted
+              features={[
+                'Everything in Free',
+                'Custom domain',
+                'No ads',
+                'QR code downloads',
+                'Advanced analytics',
+              ]}
+              cta="Start free trial"
+              href="/login"
+            />
+            <PriceCard
+              name="Business"
+              price="$29"
+              period="per month"
+              features={[
+                'Everything in Pro',
+                'Team collaboration',
+                'API access',
+                'Priority support',
+                'SSO & SAML',
+              ]}
+              cta="Contact us"
+              href="/login"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="border-t border-gray-100 bg-gray-50">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Frequently asked questions
+            </h2>
+          </div>
+
+          <div className="mt-10 space-y-3">
+            <Faq
+              q="Is ShortURL really free?"
+              a="Yes. The Free plan lets you create unlimited short links at no cost. Every short link shows a 5-second ad interstitial to keep the service free."
+            />
+            <Faq
+              q="Do I need an account to shorten a URL?"
+              a="No. Anyone can paste a URL on the home page and get a short link instantly. Sign in only if you want to manage all your links from the dashboard."
+            />
+            <Faq
+              q="Can I customize my short link?"
+              a="Yes. Toggle on 'Use custom alias' (in the admin dashboard) and choose your own short code, like /r/my-link."
+            />
+            <Faq
+              q="How does the 5-second ad page work?"
+              a="When someone opens your short URL, they see a brief, skippable ad for 5 seconds before being redirected to your destination. This keeps ShortURL free."
+            />
+            <Faq
+              q="Do you track clicks?"
+              a="Yes. Every visit is counted and visible in your admin dashboard. We only count clicks — we never sell your data."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-blue-600 text-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 sm:py-20">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Ready to shorten your first link?
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-blue-100">
+            Join millions of users who trust ShortURL to manage, track, and
+            share their links every day.
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="#top"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:bg-blue-50"
+            >
+              <Zap className="h-4 w-4" fill="currentColor" />
+              Shorten a URL now
+            </a>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Sign up free <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+            <div className="col-span-2">
+              <Link href="/" className="flex items-center gap-2">
+                <span className="text-2xl font-extrabold tracking-tight text-blue-600">
+                  ShortURL
+                </span>
+              </Link>
+              <p className="mt-3 max-w-xs text-sm text-gray-500">
+                The fast, free, and reliable way to shorten, track, and share
+                your links.
+              </p>
+            </div>
+            <FooterCol
+              title="Product"
+              links={[
+                { label: 'Features', href: '#features' },
+                { label: 'Pricing', href: '#pricing' },
+                { label: 'How it works', href: '#how' },
+                { label: 'FAQ', href: '#faq' },
+              ]}
+            />
+            <FooterCol
+              title="Account"
+              links={[
+                { label: 'Log in', href: '/login' },
+                { label: 'Sign up', href: '/login' },
+                { label: 'Admin dashboard', href: '/admin' },
+              ]}
+            />
+            <FooterCol
+              title="Legal"
+              links={[
+                { label: 'Terms', href: '#' },
+                { label: 'Privacy', href: '#' },
+                { label: 'Cookies', href: '#' },
+              ]}
+            />
+          </div>
+          <div className="mt-10 border-t border-gray-200 pt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <p className="text-xs text-gray-500">
+              &copy; {new Date().getFullYear()} ShortURL. All rights reserved.
+              Inspired by TinyURL.
+            </p>
+            <p className="text-xs text-gray-400">
+              Built with Next.js, TypeScript, Tailwind &amp; PostgreSQL
+            </p>
+          </div>
         </div>
       </footer>
     </div>
   )
 }
 
-function FeatureItem({
+function Stat({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-2xl font-extrabold sm:text-3xl">{number}</div>
+      <div className="mt-1 text-xs text-blue-100 sm:text-sm">{label}</div>
+    </div>
+  )
+}
+
+function FeatureCard({
   icon,
   title,
   desc,
@@ -388,12 +610,127 @@ function FeatureItem({
   desc: string
 }) {
   return (
-    <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+    <div className="rounded-xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
         {icon}
       </div>
-      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-      <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
+      <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+      <p className="mt-1.5 text-sm text-gray-600">{desc}</p>
+    </div>
+  )
+}
+
+function Step({ n, title, desc }: { n: string; title: string; desc: string }) {
+  return (
+    <div className="relative">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white shadow-md shadow-blue-200">
+        {n}
+      </div>
+      <h3
+        className="mt-4 text-lg font-semibold text-gray-900"
+        dangerouslySetInnerHTML={{ __html: title }}
+      />
+      <p
+        className="mt-1 text-sm text-gray-600"
+        dangerouslySetInnerHTML={{ __html: desc }}
+      />
+    </div>
+  )
+}
+
+function PriceCard({
+  name,
+  price,
+  period,
+  features,
+  cta,
+  href,
+  highlighted,
+}: {
+  name: string
+  price: string
+  period: string
+  features: string[]
+  cta: string
+  href: string
+  highlighted?: boolean
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border bg-white p-6 ${
+        highlighted ? 'border-blue-600 shadow-lg shadow-blue-100' : 'border-gray-200'
+      }`}
+    >
+      {highlighted && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white">
+          Most popular
+        </span>
+      )}
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+        {name}
+      </h3>
+      <div className="mt-3 flex items-baseline gap-1">
+        <span className="text-4xl font-extrabold text-gray-900">{price}</span>
+        <span className="text-sm text-gray-500">/ {period}</span>
+      </div>
+      <ul className="mt-6 space-y-2">
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2 text-sm text-gray-600">
+            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={href}
+        className={`mt-6 block rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition-colors ${
+          highlighted
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : 'border border-blue-200 text-blue-700 hover:bg-blue-50'
+        }`}
+      >
+        {cta}
+      </Link>
+    </div>
+  )
+}
+
+function Faq({ q, a }: { q: string; a: string }) {
+  return (
+    <details className="group rounded-lg border border-gray-200 bg-white p-4 open:shadow-sm">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-gray-900">
+        <span>{q}</span>
+        <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
+      </summary>
+      <p className="mt-2 text-sm text-gray-600">{a}</p>
+    </details>
+  )
+}
+
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string
+  links: { label: string; href: string }[]
+}) {
+  return (
+    <div>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+        {title}
+      </h4>
+      <ul className="mt-3 space-y-2">
+        {links.map((l) => (
+          <li key={l.label}>
+            <Link
+              href={l.href}
+              className="text-sm text-gray-600 transition-colors hover:text-blue-600"
+            >
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Zap, Loader2, Eye, EyeOff, ShieldCheck, ArrowLeft } from 'lucide-react'
+import { Loader2, Eye, EyeOff, ShieldCheck, ArrowLeft, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -63,16 +63,18 @@ function LoginForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border border-blue-100 bg-white p-6 shadow-xl shadow-blue-100/60 sm:p-8"
+        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-blue-100/40 sm:p-8"
       >
         {/* Brand header */}
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
-            <ShieldCheck className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
+        <div className="mb-6 text-center">
+          <Link href="/" className="inline-block">
+            <span className="text-3xl font-extrabold tracking-tight text-blue-600">
+              ShortURL
+            </span>
+          </Link>
+          <h1 className="mt-4 text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Sign in to manage your short URLs
+            Sign in to your admin dashboard
           </p>
         </div>
 
@@ -88,15 +90,24 @@ function LoginForm() {
               placeholder="admin"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-11 border-blue-100 focus-visible:ring-blue-500"
+              className="h-11 border-gray-200 focus-visible:ring-blue-500"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-              Password
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password
+              </Label>
+              <button
+                type="button"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                onClick={() => toast.info('Demo password is password123')}
+              >
+                Forgot password?
+              </button>
+            </div>
             <div className="relative">
               <Input
                 id="password"
@@ -105,7 +116,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 border-blue-100 pr-11 focus-visible:ring-blue-500"
+                className="h-11 border-gray-200 pr-11 focus-visible:ring-blue-500"
                 required
               />
               <button
@@ -136,7 +147,7 @@ function LoginForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="h-11 w-full bg-blue-600 font-semibold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700 disabled:opacity-60"
+            className="h-11 w-full bg-blue-600 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-60"
           >
             {loading ? (
               <>
@@ -185,7 +196,7 @@ export default function LoginPage() {
         <div className="absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-blue-100/60 blur-3xl" />
       </div>
 
-      {/* Brand badge */}
+      {/* Top brand badge */}
       <div className="mb-6 flex items-center gap-2">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-200">
           <Zap className="h-4 w-4 text-white" fill="white" />
