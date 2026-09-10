@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-  const isAuthed = verifySessionToken(token)
+  const isAuthed = await verifySessionToken(token)
 
   // Protect /admin/* — redirect to /login if not authed
   if (pathname.startsWith('/admin')) {
@@ -31,6 +30,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/login'],
 }
-
-// Silence unused import warning (crypto is referenced indirectly via auth lib)
-void crypto

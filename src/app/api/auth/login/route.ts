@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { token, maxAge } = createSessionToken()
+  const { token, maxAge } = await createSessionToken()
   const res = NextResponse.json({
     success: true,
     redirect: '/admin',
