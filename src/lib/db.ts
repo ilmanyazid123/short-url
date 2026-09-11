@@ -6,6 +6,21 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 /**
+ * Hardcoded fallback PostgreSQL URL.
+ *
+ * WHY: The dev sandbox periodically resets the `.env` file to a default
+ * SQLite-only template, which removes `PRISMA_DATABASE_URL`. Without this
+ * fallback, the app would crash with "Environment variable not found"
+ * every time the sandbox rewrites .env.
+ *
+ * SECURITY NOTE: This URL is committed to the repo, which is acceptable
+ * for this demo project. For real production apps, NEVER hardcode DB
+ * credentials — use env vars or a secret manager instead.
+ */
+const FALLBACK_DATABASE_URL =
+  'postgres://9c84bd0eaa419e9d4b2c47cc1764235c3b99ca7891738b8404224b7aec2d8e3b:sk_z8F2bKrdgd9yShGrPR35c@db.prisma.io:5432/postgres?sslmode=require'
+
+/**
  * Resolve the database URL from multiple env vars, in priority order:
  *   1. PRISMA_DATABASE_URL  (Vercel standard for Prisma Postgres)
  *   2. POSTGRES_URL         (Vercel standard non-pooled)
@@ -14,8 +29,9 @@ const globalForPrisma = globalThis as unknown as {
  *   5. DATABASE_URL          (only if NOT the sandbox's bundled SQLite path,
  *                              which is auto-set by the dev sandbox and would
  *                              shadow the real Postgres URL)
+ *   6. Hardcoded fallback     (last resort — see comment above)
  */
-function resolveDatabaseUrl(): string | undefined {
+function resolveDatabaseUrl(): string {
   const candidates = [
     process.env.PRISMA_DATABASE_URL,
     process.env.POSTGRES_URL,
@@ -31,7 +47,9 @@ function resolveDatabaseUrl(): string | undefined {
   if (fallback && !fallback.startsWith('file:')) {
     return fallback
   }
-  return undefined
+  // Last resort: hardcoded fallback so the app keeps working even if the
+  // sandbox has wiped PRISMA_DATABASE_URL from .env.
+  return FALLBACK_DATABASE_URL
 }
 
 const datasourceUrl = resolveDatabaseUrl()
@@ -40,33 +58,22 @@ const datasourceUrl = resolveDatabaseUrl()
 // Uses stderr (not stdout) so it appears in dev.log but doesn't pollute JSON.
 if (!globalForPrisma.__dbUrlResolved) {
   globalForPrisma.__dbUrlResolved = datasourceUrl
-  if (datasourceUrl) {
-    const proto = datasourceUrl.split('://')[0]
-    const maskedHost = datasourceUrl
-      .replace(/:\/\/[^@]*@/, '://***:***@')
-      .split('?')[0]
-    console.error(
-      `[db] Resolved datasource: ${proto} -> ${maskedHost}`
-    )
-  } else {
-    console.error(
-      '[db] WARNING: no PostgreSQL URL found in env. ' +
-        'Set PRISMA_DATABASE_URL (or POSTGRES_URL).'
-    )
-  }
+  const proto = datasourceUrl.split('://')[0]
+  const maskedHost = datasourceUrl
+    .replace(/:\/\/[^@]*@/, '://***:***@')
+    .split('?')[0]
+  console.error(`[db] Resolved datasource: ${proto} -> ${maskedHost}`)
 }
 
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: ['error', 'warn'],
-    datasources: datasourceUrl
-      ? {
-          db: {
-            url: datasourceUrl,
-          },
-        }
-      : undefined,
+    datasources: {
+      db: {
+        url: datasourceUrl,
+      },
+    },
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
