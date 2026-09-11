@@ -98,8 +98,26 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('Failed to shorten URL:', err)
+    const detail =
+      err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : 'Unknown error'
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        detail,
+        // Also expose env var status (without leaking values) for debugging
+        env: {
+          POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL
+            ? 'set'
+            : 'unset',
+          DATABASE_URL: process.env.DATABASE_URL
+            ? process.env.DATABASE_URL.startsWith('file:')
+              ? 'file (SQLite — sandbox default)'
+              : 'set (postgres)'
+            : 'unset',
+        },
+      },
       { status: 500 }
     )
   }
