@@ -7,10 +7,16 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Uses DATABASE_URL env var. We set DATABASE_URL in .env to the Neon
-  // non-pooled URL for migrations / `prisma db push`.
-  // At runtime, src/lib/db.ts overrides with the pooled URL when available.
-  url = env("DATABASE_URL")
+  // IMPORTANT: Hardcoded URL (not env var) because the dev sandbox
+  // periodically rewrites .env to a SQLite-only template, which would
+  // cause Prisma Client generation to bake in the wrong URL and break
+  // the app at runtime. The runtime override in src/lib/db.ts still
+  // works for production env vars (POSTGRES_PRISMA_URL etc.) but the
+  // baked-in URL guarantees a working baseline.
+  //
+  // For production: replace this with your real Neon URL or set
+  // process.env.DATABASE_URL and uncomment the env() line.
+  url = "postgresql://neondb_owner:npg_o98JurCldcEU@ep-damp-union-b3r8f70y-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&connect_timeout=15&sslmode=require"
 }
 
 model ShortUrl {
