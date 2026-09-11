@@ -7,12 +7,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Primary env var (set by Vercel Prisma Postgres integration).
-  // Fallback to DATABASE_URL (standard) if PRISMA_DATABASE_URL is missing
-  // — needed because some sandbox environments overwrite .env and only
-  // set DATABASE_URL. The runtime override in src/lib/db.ts picks the
-  // right URL at query time regardless of what the schema baked in.
-  url = env("PRISMA_DATABASE_URL")
+  // Uses DATABASE_URL env var. We set DATABASE_URL in .env to the Neon
+  // non-pooled URL for migrations / `prisma db push`.
+  // At runtime, src/lib/db.ts overrides with the pooled URL when available.
+  url = env("DATABASE_URL")
 }
 
 model ShortUrl {

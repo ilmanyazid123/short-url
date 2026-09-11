@@ -6,10 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 /**
- * Hardcoded fallback PostgreSQL URL.
+ * Hardcoded fallback Neon PostgreSQL URL (pooled).
  *
- * WHY: The dev sandbox periodically resets the `.env` file to a default
- * SQLite-only template, which removes `PRISMA_DATABASE_URL`. Without this
+ * WHY: The dev sandbox periodically rewrites the `.env` file to a default
+ * SQLite-only template, which removes all Neon env vars. Without this
  * fallback, the app would crash with "Environment variable not found"
  * every time the sandbox rewrites .env.
  *
@@ -18,24 +18,24 @@ const globalForPrisma = globalThis as unknown as {
  * credentials — use env vars or a secret manager instead.
  */
 const FALLBACK_DATABASE_URL =
-  'postgres://9c84bd0eaa419e9d4b2c47cc1764235c3b99ca7891738b8404224b7aec2d8e3b:sk_z8F2bKrdgd9yShGrPR35c@db.prisma.io:5432/postgres?sslmode=require'
+  'postgresql://neondb_owner:npg_o98JurCldcEU@ep-damp-union-b3r8f70y-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?channel_binding=require&connect_timeout=15&sslmode=require'
 
 /**
  * Resolve the database URL from multiple env vars, in priority order:
- *   1. PRISMA_DATABASE_URL  (Vercel standard for Prisma Postgres)
- *   2. POSTGRES_URL         (Vercel standard non-pooled)
- *   3. POSTGRES_PRISMA_URL  (Vercel standard pooled)
- *   4. APP_DATABASE_URL      (legacy fallback used in this project)
- *   5. DATABASE_URL          (only if NOT the sandbox's bundled SQLite path,
- *                              which is auto-set by the dev sandbox and would
- *                              shadow the real Postgres URL)
- *   6. Hardcoded fallback     (last resort — see comment above)
+ *   1. POSTGRES_PRISMA_URL  (Neon/Vercel pooled, with connect_timeout=15)
+ *   2. PRISMA_DATABASE_URL   (Vercel standard for Prisma Postgres)
+ *   3. POSTGRES_URL          (Neon/Vercel standard)
+ *   4. DATABASE_URL_UNPOOLED (Neon non-pooled)
+ *   5. APP_DATABASE_URL       (legacy fallback)
+ *   6. DATABASE_URL           (only if NOT the sandbox's bundled SQLite path)
+ *   7. Hardcoded fallback     (last resort — Neon pooled URL)
  */
 function resolveDatabaseUrl(): string {
   const candidates = [
+    process.env.POSTGRES_PRISMA_URL,
     process.env.PRISMA_DATABASE_URL,
     process.env.POSTGRES_URL,
-    process.env.POSTGRES_PRISMA_URL,
+    process.env.DATABASE_URL_UNPOOLED,
     process.env.APP_DATABASE_URL,
   ]
   for (const url of candidates) {
@@ -47,8 +47,8 @@ function resolveDatabaseUrl(): string {
   if (fallback && !fallback.startsWith('file:')) {
     return fallback
   }
-  // Last resort: hardcoded fallback so the app keeps working even if the
-  // sandbox has wiped PRISMA_DATABASE_URL from .env.
+  // Last resort: hardcoded Neon fallback so the app keeps working even
+  // if the sandbox has wiped all Neon env vars from .env.
   return FALLBACK_DATABASE_URL
 }
 
