@@ -1,13 +1,15 @@
 import { redirect } from 'next/navigation'
-import { isAuthenticated } from '@/lib/auth'
+import { getAuthRole } from '@/lib/auth'
 import { AdminDashboard } from '@/components/admin-dashboard'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
-  const authed = await isAuthenticated()
-  if (!authed) {
+  const role = await getAuthRole()
+  if (!role) {
     redirect('/login?from=/admin')
   }
-  return <AdminDashboard username="admin" />
+  // Both 'admin' and 'root' can view the admin dashboard.
+  // Root users get a hint banner suggesting they use the root panel.
+  return <AdminDashboard username={role} />
 }

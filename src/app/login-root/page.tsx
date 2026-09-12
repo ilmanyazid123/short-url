@@ -4,16 +4,16 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Loader2, Eye, EyeOff, ShieldCheck, ArrowLeft, ArrowRight, Zap } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Crown, ArrowLeft, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 
-function LoginForm() {
+function RootLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const fromPath = searchParams.get('from') || '/admin'
+  const fromPath = searchParams.get('from') || '/root'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -22,9 +22,9 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Prefill the demo credentials to make first login frictionless
-    setUsername('admin')
-    setPassword('password123')
+    // Prefill root credentials for demo convenience
+    setUsername('root')
+    setPassword('root-password-2026')
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +45,12 @@ function LoginForm() {
       if (!res.ok) {
         throw new Error(data.error || 'Login failed')
       }
-      toast.success('Welcome back, admin!')
+      if (data.role !== 'root') {
+        throw new Error(
+          'These credentials belong to a regular admin. Use /login instead.'
+        )
+      }
+      toast.success('Welcome back, root!')
       router.push(fromPath)
       router.refresh()
     } catch (err) {
@@ -63,51 +68,51 @@ function LoginForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xl shadow-blue-100/40 sm:p-8"
+        className="rounded-2xl border border-purple-200 bg-white p-6 shadow-xl shadow-purple-100/60 sm:p-8"
       >
         {/* Brand header */}
         <div className="mb-6 text-center">
-          <Link href="/" className="inline-block">
-            <span className="text-3xl font-extrabold tracking-tight text-blue-600">
-              ShortURL
-            </span>
-          </Link>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">Welcome back</h1>
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-purple-800 shadow-lg shadow-purple-200">
+            <Crown className="h-6 w-6 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Root Access</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Sign in to your admin dashboard
+            Highest authority · Full system control
           </p>
+        </div>
+
+        <div className="mb-5 flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2.5 text-xs text-purple-700">
+          <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <div>
+            <p className="font-semibold">Restricted area</p>
+            <p className="mt-0.5">
+              Root credentials grant full database management capabilities,
+              including bulk delete and visit counter reset. Use with caution.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username" className="text-sm font-medium text-gray-700">
-              Username
+              Root Username
             </Label>
             <Input
               id="username"
               type="text"
               autoComplete="username"
-              placeholder="admin"
+              placeholder="root"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-11 border-gray-200 focus-visible:ring-blue-500"
+              className="h-11 border-purple-100 focus-visible:ring-purple-500"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <button
-                type="button"
-                className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                onClick={() => toast.info('Demo password is password123')}
-              >
-                Forgot password?
-              </button>
-            </div>
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              Root Password
+            </Label>
             <div className="relative">
               <Input
                 id="password"
@@ -116,13 +121,13 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 border-gray-200 pr-11 focus-visible:ring-blue-500"
+                className="h-11 border-purple-100 pr-11 focus-visible:ring-purple-500"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPass((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-gray-400 transition-colors hover:bg-purple-50 hover:text-purple-700"
                 aria-label={showPass ? 'Hide password' : 'Show password'}
               >
                 {showPass ? (
@@ -147,78 +152,77 @@ function LoginForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="h-11 w-full bg-blue-600 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-60"
+            className="h-11 w-full bg-gradient-to-r from-purple-600 to-purple-800 font-semibold text-white shadow-sm transition-colors hover:from-purple-700 hover:to-purple-900 disabled:opacity-60"
           >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                Authenticating...
               </>
             ) : (
               <>
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Sign in
+                <Crown className="mr-2 h-4 w-4" />
+                Enter Root Mode
               </>
             )}
           </Button>
         </form>
 
         {/* Demo hint */}
-        <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2.5 text-xs text-blue-700">
-          <span className="font-semibold">Demo credentials</span> are pre-filled
-          above. Just press &ldquo;Sign in&rdquo;.
+        <div className="mt-5 rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2.5 text-xs text-purple-700">
+          <span className="font-semibold">Demo root credentials</span> are
+          pre-filled above. Just press &ldquo;Enter Root Mode&rdquo;.
         </div>
 
         <div className="mt-5 flex items-center justify-between text-xs">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 font-medium text-gray-500 transition-colors hover:text-blue-700"
+            className="inline-flex items-center gap-1.5 font-medium text-gray-500 transition-colors hover:text-purple-700"
           >
             <ArrowLeft className="h-3 w-3" />
             Home
           </Link>
           <Link
-            href="/login-root"
-            className="inline-flex items-center gap-1.5 font-medium text-purple-700 transition-colors hover:text-purple-900"
+            href="/login"
+            className="inline-flex items-center gap-1.5 font-medium text-gray-500 transition-colors hover:text-blue-700"
           >
-            Root access
-            <ArrowRight className="h-3 w-3" />
+            Regular admin login
           </Link>
         </div>
       </motion.div>
 
       <p className="mt-4 text-center text-xs text-gray-400">
-        Protected area · Authorized personnel only
+        Authorized root personnel only · All actions are logged
       </p>
     </div>
   )
 }
 
-export default function LoginPage() {
+export default function RootLoginPage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-50 p-4">
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
-        <div className="absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-blue-100/60 blur-3xl" />
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-200/40 blur-3xl" />
+        <div className="absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-purple-100/60 blur-3xl" />
       </div>
 
       {/* Top brand badge */}
       <div className="mb-6 flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-200">
-          <Zap className="h-4 w-4 text-white" fill="white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-purple-800 shadow-lg shadow-purple-200">
+          <Crown className="h-4 w-4 text-white" />
         </div>
-        <span className="text-lg font-bold text-blue-900">ShortURL</span>
+        <span className="text-lg font-bold text-purple-900">ShortURL Root</span>
       </div>
 
       <Suspense
         fallback={
           <div className="flex h-12 w-12 items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+            <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
           </div>
         }
       >
-        <LoginForm />
+        <RootLoginForm />
       </Suspense>
     </main>
   )

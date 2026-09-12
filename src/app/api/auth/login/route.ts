@@ -25,19 +25,24 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (!verifyCredentials(username, password)) {
-    // Slight delay to slow brute-force attempts (still stateless)
+  const role = verifyCredentials(username, password)
+  if (!role) {
     return NextResponse.json(
       { error: 'Invalid username or password' },
       { status: 401 }
     )
   }
 
-  const { token, maxAge } = await createSessionToken()
+  const { token, maxAge } = await createSessionToken(role)
+
+  // Root users go to /root, admin users go to /admin
+  const redirect = role === 'root' ? '/root' : '/admin'
+
   const res = NextResponse.json({
     success: true,
-    redirect: '/admin',
-    user: { username: 'admin' },
+    redirect,
+    role,
+    user: { username },
   })
   res.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,

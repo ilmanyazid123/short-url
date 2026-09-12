@@ -17,6 +17,7 @@ import {
   BarChart3,
   Globe,
   ArrowRight,
+  Crown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -139,6 +140,13 @@ export default function Home() {
               className="rounded-md px-3 py-2 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50"
             >
               Log in
+            </Link>
+            <Link
+              href="/login-root"
+              className="inline-flex items-center gap-1.5 rounded-md border border-purple-200 px-3 py-2 text-sm font-semibold text-purple-700 transition-colors hover:bg-purple-50"
+            >
+              <Crown className="h-3.5 w-3.5" />
+              Root
             </Link>
             <Link
               href="/login"
